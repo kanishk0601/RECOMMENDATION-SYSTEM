@@ -1,0 +1,33 @@
+# Task 4: Recommendation System using Collaborative Filtering
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+# Sample data: users' ratings for items (movies/books/products etc.)
+data = {
+    'User': ['A', 'A', 'B', 'B', 'C', 'C'],
+    'Item': ['Item1', 'Item2', 'Item2', 'Item3', 'Item1', 'Item3'],
+    'Rating': [5, 3, 4, 2, 2, 5]
+}
+df = pd.DataFrame(data)
+
+# Create user-item matrix
+user_item_matrix = df.pivot_table(index='User', columns='Item', values='Rating').fillna(0)
+
+# Compute similarity between users
+similarity = cosine_similarity(user_item_matrix)
+sim_df = pd.DataFrame(similarity, index=user_item_matrix.index, columns=user_item_matrix.index)
+
+print("User Similarity Matrix:\n", sim_df)
+
+# Predict rating for a missing item for User A using weighted average
+def predict_rating(user, item):
+    similar_users = sim_df[user].drop(user)
+    item_ratings = user_item_matrix.loc[similar_users.index, item]
+    weighted_sum = np.dot(similar_users, item_ratings)
+    sum_of_weights = similar_users[item_ratings > 0].sum()
+    if sum_of_weights == 0:
+        return 0
+    return weighted_sum / sum_of_weights
+
+print("Predicted rating by User A for Item3:", predict_rating('A', 'Item3'))
